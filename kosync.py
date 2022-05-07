@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+from datetime import datetime
 import os
 import time
 
@@ -110,6 +113,43 @@ def get_progress(document):
     return jsonify(doc), 200
 
 
+# --- Pages ---
+
+
+@app.route('/')
+def index():
+    global g_storage_backend
+    docs = g_storage_backend.get_recent_documents()
+    output = "<!DOCTYPE html><html><body>"
+    output += "<table border=1 cellspacing=0>"
+    output += "<tr>"
+    output += """
+                  <td>username</td>
+                  <td>document</td>
+                  <td>progress</td>
+                  <td>percentage</td>
+                  <td>device</td>
+                  <td>device_id</td>
+                  <td>timestamp</td>
+              """
+    output += "</tr>"
+    for d in docs:
+        output += "<tr>"
+        output += f"""
+                      <td>{d.username}</td>
+                      <td>{d.document}</td>
+                      <td>{d.progress}</td>
+                      <td>{d.percentage * 100}</td>
+                      <td>{d.device}</td>
+                      <td>{d.device_id}</td>
+                      <td>{datetime.fromtimestamp(d.timestamp)}</td>
+                  """
+        output += "</tr>"
+    output += "</table>"
+    output += "</body></html>"
+    return output
+
+
 # --- Initialization Code ---
 
 
@@ -126,7 +166,7 @@ def initialize():
 
 
 def main():
-    app.run()
+    app.run(debug=True)
 
 
 initialize()

@@ -1,5 +1,6 @@
-from backend.common import Document
+from backend.common import RawDocument, Document
 import sqlite3
+from typing import List
 
 
 # SQLite3 backend, stores data in a local .db file
@@ -129,6 +130,27 @@ class BackendSQLite:
         connection.close()
 
         return resultdoc
+
+    def get_recent_documents(self) -> List[RawDocument]:
+        connection = sqlite3.connect(self.database)
+        cursor = connection.cursor()
+
+        cursor.execute('''SELECT * FROM documents
+                          ORDER BY timestamp DESC
+                          LIMIT 100''')
+        rows = cursor.fetchall()
+
+        results = []
+        for row in rows:
+            results.append(RawDocument(row[0], row[1], row[2], row[3], row[4],
+                                       row[5], row[6]))
+
+        # Cleanup
+        cursor.close()
+        connection.commit()
+        connection.close()
+
+        return results
 
     # Prints the database to the console.
     # Intended for debugging.
