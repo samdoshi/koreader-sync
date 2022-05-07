@@ -1,6 +1,7 @@
 from backend.common import Document
 import sqlite3
 
+
 # SQLite3 backend, stores data in a local .db file
 class BackendSQLite:
     # The database location
@@ -56,17 +57,27 @@ class BackendSQLite:
         cursor = connection.cursor()
 
         # If the document doesn't exist, let's create it.
-        cursor.execute("SELECT * FROM documents WHERE username = ? AND document = ?", (username, document.document))
+        cursor.execute('''SELECT *
+                          FROM documents
+                          WHERE username = ? AND document = ?''',
+                       (username, document.document))
         if not cursor.fetchone():
-            cursor.execute("INSERT INTO documents VALUES (?, ?, ?, ?, ?, ?, ?)",
-                           (username, document.document, document.progress, document.percentage,
-                            document.device, document.device_id, document.timestamp))
+            cursor.execute('''INSERT INTO documents
+                              VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                           (username, document.document, document.progress,
+                            document.percentage, document.device,
+                            document.device_id, document.timestamp))
 
         # If the document _does_ exist, update it.
         cursor.execute('''UPDATE documents
-                          SET progress = ?, percentage = ?, device = ?, device_id = ?, timestamp = ?
+                          SET progress = ?,
+                              percentage = ?,
+                              device = ?,
+                              device_id = ?,
+                              timestamp = ?
                           WHERE username = ? AND document = ?''',
-                       (document.progress, document.percentage, document.device, document.device_id,
+                       (document.progress, document.percentage,
+                        document.device, document.device_id,
                         document.timestamp, username, document.document))
 
         # Cleanup
@@ -81,7 +92,9 @@ class BackendSQLite:
         cursor = connection.cursor()
 
         # Check if the username/userkey combo exists.
-        cursor.execute("SELECT * FROM users WHERE username = ? AND userkey = ?", (username, userkey))
+        cursor.execute('''SELECT * FROM users
+                          WHERE username = ? AND userkey = ?''',
+                       (username, userkey))
         exists = bool(cursor.fetchone())
 
         # Cleanup
@@ -99,7 +112,9 @@ class BackendSQLite:
         cursor = connection.cursor()
 
         # Get the relevant row in the table
-        cursor.execute("SELECT * FROM documents WHERE username = ? AND document = ?", (username, document))
+        cursor.execute('''SELECT * FROM documents
+                          WHERE username = ? AND document = ?''',
+                       (username, document))
         row = cursor.fetchone()
         if not row:
             # Document isn't present in the database
@@ -134,4 +149,3 @@ class BackendSQLite:
         # Cleanup
         cursor.close()
         connection.close()
-

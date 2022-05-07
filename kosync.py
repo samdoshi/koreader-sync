@@ -1,19 +1,20 @@
-from flask import Flask, jsonify, request
-app = Flask(__name__)
+import os
+import time
 
-import argparse
+from flask import Flask, jsonify, request
+
 from backend.common import Document
 import backend.sqlite
-import os, time
+
+app = Flask(__name__)
+
 
 # --- API Routes ---
 
-@app.route('/users/create', methods = ['POST'])
+
+@app.route('/users/create', methods=['POST'])
 def register():
     global g_storage_backend
-
-    if not g_allow_registration:
-        return "Registration has been disabled", 400
 
     if not request.is_json:
         return "Invalid Request", 400
@@ -29,7 +30,8 @@ def register():
         return "Username is already registered", 409
 
     # Return the created username
-    return jsonify(dict(username = username)), 201
+    return jsonify(dict(username=username)), 201
+
 
 @app.route('/users/auth')
 def authorize():
@@ -44,12 +46,13 @@ def authorize():
 
     if g_storage_backend.check_login(username, userkey):
         # Success
-        return jsonify(dict(authorized = "OK"))
+        return jsonify(dict(authorized="OK"))
     else:
         # Access Denied
         return "Incorrect username or password.", 401
 
-@app.route('/syncs/progress', methods = ['PUT'])
+
+@app.route('/syncs/progress', methods=['PUT'])
 def sync_progress():
     global g_storage_backend
 
@@ -69,8 +72,9 @@ def sync_progress():
     device_id = j.get("device_id")
     timestamp = int(time.time())
 
-    if ((username is None) or (document is None) or (progress is None) or (percentage is None)
-            or (userkey is None) or (device is None) or (device_id is None) or (timestamp is None)):
+    if ((username is None) or (document is None) or (progress is None)
+        or (percentage is None) or (userkey is None) or (device is None)
+            or (device_id is None) or (timestamp is None)):
         return "Missing/invalid parameters provided", 400
 
     # Let's authenticate first
@@ -78,12 +82,14 @@ def sync_progress():
         return "Incorrect username or password.", 401
 
     # Create a document based on all of the provided paramters
-    doc = Document(document, progress, percentage, device, device_id, timestamp)
+    doc = Document(document, progress, percentage,
+                   device, device_id, timestamp)
 
     # Add the document to the database
     g_storage_backend.update_document(username, doc)
 
-    return jsonify(dict(document = document, timestamp = timestamp))
+    return jsonify(dict(document=document, timestamp=timestamp))
+
 
 @app.route('/syncs/progress/<document>')
 def get_progress(document):
@@ -103,7 +109,9 @@ def get_progress(document):
     # Return it to the client
     return jsonify(doc), 200
 
+
 # --- Initialization Code ---
+
 
 def initialize():
     # Set some global configuration variables
@@ -112,20 +120,17 @@ def initialize():
     else:
         db = "sqlite3.db"
 
-    global g_allow_registration
-    g_allow_registration = True
-    if ("KOSYNC_SQLITE3_DB" in os.environ) and (os.environ["KOSYNC_SQLITE3_DB"] == "false"):
-        g_allow_registration = False
-
     # Initialize the database
     global g_storage_backend
     g_storage_backend = backend.sqlite.BackendSQLite(db)
 
+
 def main():
     app.run()
 
+
 initialize()
+
 
 if __name__ == "__main__":
     main()
-
